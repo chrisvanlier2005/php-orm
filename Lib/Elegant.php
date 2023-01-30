@@ -106,7 +106,12 @@ class Elegant
         $db = DatabaseQuery::new();
         $db->setQuery($baseQuery);
         $db->setParameters(['id' => $id]);
-        $result = $db->execute()[0];
+
+        $result = $db->execute();
+        if (empty($result)) {
+            throw new Exception("No record found with id {$id}");
+        }
+        $result = $result[0];
 
         if (empty($result)) {
             throw new Exception("No record found with id {$id}");
