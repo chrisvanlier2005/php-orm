@@ -12,9 +12,9 @@ i've created it with a very similair syntax to laravel.
 
 
 ### features and task list;
-[x] to Many relationship
-[x] belongsTo relationship
-[ ] to many through relationship
-[ ] inserting
-[ ] updating
-[ ] deleting
+- [x] to Many relationship
+- [x] belongsTo relationship
+- [ ] to many through relationship
+- [ ] inserting
+- [ ] updating
+- [ ] deleting
