@@ -18,3 +18,4 @@ i've created it with a very similair syntax to laravel.
 - [ ] inserting
 - [ ] updating
 - [ ] deleting
+- [ ] Easy database config 
