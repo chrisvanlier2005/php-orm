@@ -15,9 +15,7 @@ class Elegant
 {
     public $relations = [];
     protected $table;
-    protected $fillable = [];
-    protected $hidden = [];
-    protected $guarded = [];
+    protected $fields = [];
     protected $primaryKey = 'id';
 
     public function __construct()
@@ -44,6 +42,29 @@ class Elegant
             $relation = $this->$relation($type);
             $relation->execute_relation($result, $type, $this->primaryKey);
         }
+    }
+
+    private function validate_fields($params){
+        foreach ($this->fields as $field)
+        {
+            if (!in_array($field, array_keys($params)))
+            {
+                throw new Exception("Field {$field} is required");
+            }
+        }
+    }
+
+    private function insert($params)
+    {
+        $db = DatabaseQuery::new();
+        $query = "INSERT INTO {$this->table} (";
+        $query .= implode(',', array_keys($params));
+        $query .= ") VALUES (";
+        $query .= implode(',', array_fill(0, count($params), '?'));
+        $query .= ")";
+        $db->setQuery($query);
+        $db->setParameters(array_values($params));
+        return $db->execute();
     }
 
     public static function all()
@@ -133,5 +154,11 @@ class Elegant
 
         $this->get_relations($results);
         return $results;
+    }
+
+    public static function create($params){
+        $model = new static();
+        $model->validate_fields($params);
+        $model->insert($params);
     }
 }

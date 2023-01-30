@@ -2,13 +2,16 @@
 require_once 'includes.php';
 
 use Models\Post;
-use Chrisvanlier2005\DatabaseQuery;
-use Models\Comment;
 
 try {
+    $post = Post::create([
+        "title" => "My first post",
+        "content" => "This is my first post"
+    ]);
+
 
     $posts = Post::with('comments')->get();
-} catch (Exception $e){
+} catch (Exception $e) {
     dd($e->getMessage());
 }
 
