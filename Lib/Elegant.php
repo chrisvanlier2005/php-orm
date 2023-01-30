@@ -6,6 +6,10 @@ use Exception;
 use HasMany;
 use ReflectionClass;
 
+enum QueryType {
+    case SINGLE;
+    case MULTIPLE;
+}
 class Elegant
 {
     public $relations = [];
@@ -29,10 +33,15 @@ class Elegant
     }
 
     private function get_relations(&$result){
+        $type = QueryType::SINGLE;
+        if(!$result instanceof \stdClass){
+            $type = QueryType::MULTIPLE;
+        }
+
         foreach($this->relations as $relation)
         {
-            $relation = $this->$relation();
-            $result->{$relation->table} = $relation->execute_relation($result->{$this->primaryKey});
+            $relation = $this->$relation($type);
+            $relation->execute_relation($result, $type, $this->primaryKey);
         }
     }
 
@@ -99,5 +108,19 @@ class Elegant
 
         $this->get_relations($result);
         return $result;
+    }
+
+    public function get()
+    {
+        $baseQuery = "SELECT * FROM {$this->table}";
+        $db = DatabaseQuery::new();
+        $db->setQuery($baseQuery);
+        $results = $db->execute();
+        if (empty($results)) {
+            throw new Exception("No records found");
+        }
+
+        $this->get_relations($results);
+        return $results;
     }
 }
