@@ -4,6 +4,7 @@ namespace Chrisvanlier2005;
 
 use Exception;
 use HasMany;
+use Chrisvanlier2005\BelongsTo;
 use ReflectionClass;
 
 enum QueryType {
@@ -70,6 +71,11 @@ class Elegant
     {
         $this->validate_class($model_class);
         return new HasMany($model_class, $foreignKeyName, $table);
+    }
+
+    public function belongsTo($model_class, $foreignKeyName, $localKeyName, $table = null){
+        $this->validate_class($model_class);
+        return new BelongsTo($model_class, $foreignKeyName, $localKeyName, $table);
     }
 
     /**
