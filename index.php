@@ -4,13 +4,10 @@ require_once 'includes.php';
 use Models\Post;
 
 try {
-    $post = Post::create([
-        "title" => "My first post",
-        "content" => "This is my first post"
-    ]);
-
-
-    $posts = Post::with('comments')->get();
+    //$post = Post::with('comments')->find(1);
+    $posts = Post::with('comments')
+        ->orderBy('id')
+        ->get();
 } catch (Exception $e) {
     dd($e->getMessage());
 }

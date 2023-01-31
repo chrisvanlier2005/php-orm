@@ -27,13 +27,31 @@ class DatabaseQuery
         return $this;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function execute(){
         $stmt = $this->PDO->prepare($this->query);
-        $stmt->execute($this->parameters);
+        foreach ($this->parameters as $key => $value)
+        {
+            $key = $key + 1;
+            $stmt->bindValue($key, $value);
+        }
+        // dump complete query with parameters
+        try {
+            $stmt->execute();
+        } catch (\PDOException $e) {
+            throw new \Exception($e->getMessage());
+        }
+
+
         return $stmt->fetchAll(\PDO::FETCH_CLASS);
 
         //return $this->PDO->execute($this->parameters);
     }
+
+
+
 
 
 }

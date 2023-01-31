@@ -19,7 +19,6 @@ class HasMany extends Chrisvanlier2005\BaseRelation
     {
         $parentIds = [];
         $query = "SELECT * FROM {$this->table} WHERE {$this->foreignKeyName} IN (";
-        // std::class to array
         foreach ($results as $result)
         {
             $parentIds[] = $result->$relation_primary_key;

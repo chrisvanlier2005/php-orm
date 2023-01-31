@@ -1,5 +1,6 @@
 <?php
 // THIS IS A TEMPORARY INCLUDES FILE
+require_once 'Lib/Traits/Filters.php';
 require_once 'Lib/Elegant.php';
 require_once 'Lib/Relations/BaseRelation.php';
 require_once "Lib/Relations/BelongsTo.php";
