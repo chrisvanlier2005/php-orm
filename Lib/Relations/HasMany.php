@@ -54,7 +54,6 @@ class HasMany extends Chrisvanlier2005\BaseRelation
         $db = DatabaseQuery::new();
         $db->setQuery($query);
         $db->setParameters([$this->id]);
-        dd($this->id);
         return $db->execute();
     }
 

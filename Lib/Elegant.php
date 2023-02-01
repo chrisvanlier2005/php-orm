@@ -23,6 +23,7 @@ class Elegant
 
     protected $query = "";
     protected $parameters = [];
+    public $id = null;
 
     public function __construct()
     {
@@ -48,10 +49,11 @@ class Elegant
 
         foreach($this->relations as $relation)
         {
-            $relation = $this->$relation($type);
+            $relation = $this->$relation(false);
             $relation->execute_relation($result, $type, $this->primaryKey);
         }
     }
+
 
     private function validate_fields($params){
         foreach ($this->fields as $field)
@@ -73,9 +75,13 @@ class Elegant
         $query .= ")";
         $db->setQuery($query);
         $db->setParameters(array_values($params));
-        //$db->execute();
-        $params[$this->primaryKey] = $db->lastInsertId();
+        $db->execute();
+        $params[$this->primaryKey] = $db->lastInsertId($this->table);
         return $params;
+    }
+
+    public function getPrimaryKey(){
+        return $this->primaryKey;
     }
 
     public static function all()
@@ -99,10 +105,10 @@ class Elegant
      * @param $model_class
      * @throws Exception
      */
-    public function hasMany($model_class, $foreignKeyName, $table = null)
+    public function hasMany($model_class, $foreignKeyName, $table = null, $instance = null)
     {
         $this->validate_class($model_class);
-        return new HasMany($model_class, $foreignKeyName, $table);
+        return new HasMany($model_class, $foreignKeyName, $table, $instance);
     }
 
     public function belongsTo($model_class, $foreignKeyName, $localKeyName, $table = null){
@@ -163,6 +169,43 @@ class Elegant
     }
 
     /**
+     * Searches for a specific item in the table
+     * @param $id
+     * @throws Exception
+     */
+    public static function search($id): stdClass
+    {
+        $eq = new static();
+        return $eq->find($id);
+    }
+
+    /**
+     * Retrieves a single record from the database
+     * based on the id or primary key, if no record is found
+     * it will kill the application
+     * @param int $id
+     * @return stdClass|void
+     */
+    public function findOrFail(int $id)
+    {
+        try {
+            return $this->find($id);
+        } catch (Exception $e) {
+            echo $e->getMessage();
+            die();
+        }
+    }
+
+    /**
+     * Creates a new instance of the model
+     * @return static
+     */
+    public static function retrieve()
+    {
+        return new static();
+    }
+
+    /**
      * Retrieves all records from the database
      * and returns them as an array
      * @return array
@@ -197,5 +240,24 @@ class Elegant
         $model = new static();
         $model->validate_fields($params);
         return $model->insert($params);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public static function hydrate(array|stdClass $params) : static
+    {
+        $hydratedClass = new static();
+        $params = (array) $params;
+        // validate the parameters
+        $hydratedClass->validate_fields($params);
+        foreach($params as $param => $value){
+            $hydratedClass->{$param} = $value;
+        }
+        if (isset($params[$hydratedClass->primaryKey])){
+            $hydratedClass->exists = true;
+            $hydratedClass->id = $params[$hydratedClass->primaryKey];
+        }
+        return $hydratedClass;
     }
 }

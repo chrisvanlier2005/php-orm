@@ -32,14 +32,9 @@ class DatabaseQuery
      */
     public function execute(){
         $stmt = $this->PDO->prepare($this->query);
-        foreach ($this->parameters as $key => $value)
-        {
-            $key = $key + 1;
-            $stmt->bindValue($key, $value);
-        }
         // dump complete query with parameters
         try {
-            $stmt->execute();
+            $stmt->execute($this->parameters);
         } catch (\PDOException $e) {
             throw new \Exception($e->getMessage());
         }
@@ -48,6 +43,11 @@ class DatabaseQuery
         return $stmt->fetchAll(\PDO::FETCH_CLASS);
 
         //return $this->PDO->execute($this->parameters);
+    }
+
+    public function lastInsertId($table){
+        $stmt = $this->PDO->query("SELECT LAST_INSERT_ID() from {$table}");
+        return $stmt->fetchColumn();
     }
 
 
