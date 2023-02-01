@@ -8,6 +8,7 @@ class BaseRelation
     protected $foreignKeyName;
     public $table;
     public $id;
+    public $instance;
 
     /**
      * @throws ReflectionException
@@ -21,6 +22,21 @@ class BaseRelation
         $this->foreignKeyName = $foreignKeyName;
         if($instance){
             $this->id = $instance->{$instance->getPrimaryKey()};
+           // $this->instance = $instance;
         }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    protected function fetchSingle(&$result){
+        throw new \Exception("Not implemented");
+    }
+
+    /**
+     * @throws \Exception
+     */
+    protected function fetchMultiple(&$results, $relation_primary_key){
+        throw new \Exception("Not implemented");
     }
 }
