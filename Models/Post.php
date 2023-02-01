@@ -17,8 +17,12 @@ class Post extends Elegant
      * @throws Exception
      */
 
-    public function comments(): HasMany
+    public function comments($magic = true): HasMany
     {
-        return $this->hasMany(Comment::class, 'post_id');
+        if (!$magic){
+            return $this->hasMany(Comment::class, 'post_id');
+        }
+        return $this->hasMany(Comment::class, 'post_id', null , $this->id);
+
     }
 }

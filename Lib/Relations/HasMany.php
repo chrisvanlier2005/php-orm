@@ -49,6 +49,13 @@ class HasMany extends Chrisvanlier2005\BaseRelation
        $db->setParameters([$result->id]);
        $result->{$this->table} = $db->execute();
     }
-
+    public function fetch(){
+        $query = "SELECT * FROM {$this->table} WHERE {$this->foreignKeyName} = ?";
+        $db = DatabaseQuery::new();
+        $db->setQuery($query);
+        $db->setParameters([$this->id]);
+        dd($this->id);
+        return $db->execute();
+    }
 
 }
