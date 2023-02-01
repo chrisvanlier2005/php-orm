@@ -113,7 +113,7 @@ class Elegant
 
     public function belongsTo($model_class, $foreignKeyName, $localKeyName, $table = null){
         $this->validate_class($model_class);
-        return new BelongsTo($model_class, $foreignKeyName, $localKeyName, $table);
+        return new BelongsTo($model_class, $foreignKeyName, $localKeyName, $table, $this);
     }
 
     /**

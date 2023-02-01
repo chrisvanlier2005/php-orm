@@ -15,7 +15,7 @@ class HasMany extends Chrisvanlier2005\BaseRelation
         return $this->fetchMultiple($result, $relation_primary_key);
     }
 
-    public function fetchMultiple(&$results, $relation_primary_key)
+    protected function fetchMultiple(&$results, $relation_primary_key)
     {
         $parentIds = [];
         $query = "SELECT * FROM {$this->table} WHERE {$this->foreignKeyName} IN (";
@@ -42,7 +42,7 @@ class HasMany extends Chrisvanlier2005\BaseRelation
         }
     }
 
-    public function fetchSingle(&$result){
+    protected function fetchSingle(&$result){
        $query = "SELECT * FROM {$this->table} WHERE {$this->foreignKeyName} = ?";
        $db = DatabaseQuery::new();
        $db->setQuery($query);

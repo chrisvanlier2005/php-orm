@@ -4,8 +4,8 @@ namespace Chrisvanlier2005;
 class BelongsTo extends BaseRelation
 {
     protected $localKeyName;
-    public function __construct($model_class, $foreignKeyName, $localKeyName, $table = null){
-        parent::__construct($model_class, $foreignKeyName, $table);
+    public function __construct($model_class, $foreignKeyName, $localKeyName, $table = null, $instance = null){
+        parent::__construct($model_class, $foreignKeyName, $table, $instance);
         $this->localKeyName = $localKeyName;
     }
     public function execute_relation(&$result, QueryType $type, $relation_primary_key = "id"){
@@ -17,7 +17,7 @@ class BelongsTo extends BaseRelation
         return $this->fetchMultiple($result, $relation_primary_key);
     }
 
-    public function fetchMultiple(&$results, $relation_primary_key){
+    protected function fetchMultiple(&$results, $relation_primary_key){
         $childIds = [];
         foreach ($results as $result)
         {
@@ -41,13 +41,22 @@ class BelongsTo extends BaseRelation
         }
     }
 
-    public function fetchSingle(&$result, $relation_primary_key){
-        $query = "SELECT * FROM {$this->table} WHERE {$relation_primary_key} = ?";
+    protected function fetchSingle(&$result){
+        $query = "SELECT * FROM {$this->table} WHERE {$this->foreignKeyName} = ?";
         $db = DatabaseQuery::new();
         $db->setQuery($query);
         $db->setParameters([$result->{$this->localKeyName}]);
         $result->{$this->table} = $db->execute();
 
+    }
+
+    public function fetch()
+    {
+        $query = "SELECT * FROM {$this->table} WHERE {$this->foreignKeyName} = ?";
+        $db = DatabaseQuery::new();
+        $db->setQuery($query);
+        $db->setParameters([$this->id]);
+        return $db->execute();
     }
 }
 
