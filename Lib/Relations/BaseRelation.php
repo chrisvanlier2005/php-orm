@@ -1,5 +1,6 @@
 <?php
 namespace Chrisvanlier2005;
+use Exception;
 use ReflectionClass;
 use ReflectionException;
 
@@ -28,39 +29,48 @@ class BaseRelation
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     protected function fetchSingle(&$result){
-        throw new \Exception("fetchSingle Not implemented");
+        throw new Exception("fetchSingle Not implemented");
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     protected function fetchMultiple(&$results, $relation_primary_key){
-        throw new \Exception("fetchMultiple Not implemented");
+        throw new Exception("fetchMultiple Not implemented");
     }
 
 
     /**
      * @return mixed
-     * @throws \Exception
+     * @throws Exception
      */
     protected function fetch(){
-        throw new \Exception("Fetch not implemented in relation");
+        throw new Exception("Fetch not implemented in relation");
     }
 
     /**
      * Alternative syntax for fetch(), does the same thing.
      * @return mixed
-     * @throws \Exception
+     * @throws Exception
      */
     public function get()
     {
         return $this->fetch();
     }
 
-    protected function sort_items(&$input_result, &$relation_result, $key_name)
+    /**
+     * Adds the relation items to the proper parent item
+     * eg. if the relation is a comment, it will add the comment to the post in the "comments" property (array)
+     * @param &$input_result array the result of the query
+     * @param &$relation_result array the result of the relation query
+     * @param &$key_name string the name of the key to compare
+     * @throws Exception
+     * @return void
+     */
+    protected function sort_items(&$input_result, &$relation_result, $key_name): void
     {
         foreach($input_result as $result)
         {
@@ -77,7 +87,10 @@ class BaseRelation
     }
 
     /**
-     * @throws \Exception
+     * Executes a single query and return the result
+     * @param $query string
+     * @param $parameters array associative array of parameters
+     * @throws Exception
      */
     protected function single_query($query, $parameters)
     {
@@ -87,12 +100,21 @@ class BaseRelation
         return $db->execute();
     }
 
+    /**
+     * Returns the number of items in the associated table
+     * @throws Exception
+     * @return array the result of the query
+     */
     public function count()
     {
         $query = "SELECT COUNT(*) FROM {$this->table} WHERE {$this->foreignKeyName} = ?";
         return $this->single_query($query, [$this->id]);
     }
 
+    /**
+     * Returns the first item in the associated table
+     * @throws Exception
+     */
     public function first()
     {
         $query = "SELECT * FROM {$this->table} WHERE {$this->foreignKeyName} = ? LIMIT 1";
