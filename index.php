@@ -3,17 +3,18 @@ require_once 'includes.php';
 
 use Models\Post;
 use Models\Comment;
-try {
-    // will return a post stdClass object
-    $post = Post::retrieve()->find(1);
-    // hydrate is required to make it interactive again.
-    $post = Post::hydrate($post);
-    $comments = $post->comments()->fetch();
 
-}
-catch(Exception $e){
+try {
+    $post = Post::search(1);
+    Post::hydrate($post);
+
+    $post->comments()->attach([
+            "title" => "This is a comment",
+    ]);
+} catch (Exception $e) {
     dd($e->getMessage());
-};
+}
+
 ?>
 
 <style>
@@ -27,9 +28,7 @@ catch(Exception $e){
         gap: 1rem;
     }
 </style>
-<?php foreach ($comments as $comment): ?>
-    <div class="comment">
-        <h6><?= $comment->id ?></h6>
-        <p><?= $comment->content ?></p>
-    </div>
-<?php endforeach; ?>
+
+<pre>
+    <?php var_dump($post) ?>
+</pre>

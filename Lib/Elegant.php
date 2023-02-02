@@ -20,11 +20,30 @@ class Elegant
     use Filters;
 
     public $relations = [];
+
+    /**
+     * The id of the model instance, used for updating and deleting
+     */
     public $id = null;
+
+    /**
+     * The name of the table this model is associated with
+     */
     protected $table;
     protected $fields = [];
+    /**
+     * The primary key of the table
+     */
     protected $primaryKey = 'id';
+
+    /**
+     * Used for storing the database query
+     */
     protected $query = "";
+
+    /**
+     * Used for storing parameters for the database query
+     */
     protected $parameters = [];
 
     public function __construct()
@@ -136,7 +155,7 @@ class Elegant
         return $model->insert($params);
     }
 
-    private function validate_fields($params)
+    public function validate_fields($params)
     {
         foreach ($this->fields as $field) {
             if (!in_array($field, array_keys($params))) {
@@ -161,9 +180,13 @@ class Elegant
     }
 
     /**
+     * "Hydrates" the object to the model
+     * throws an exception if the fields are not valid for the model
+     * @param $params array | stdClass
+     * @return Elegant
      * @throws Exception
      */
-    public static function hydrate(array|stdClass $params): static
+    public static function hydrate(array|stdClass &$params): static
     {
         $hydratedClass = new static();
         $params = (array)$params;
@@ -176,6 +199,7 @@ class Elegant
             $hydratedClass->exists = true;
             $hydratedClass->id = $params[$hydratedClass->primaryKey];
         }
+        $params = $hydratedClass;
         return $hydratedClass;
     }
 
