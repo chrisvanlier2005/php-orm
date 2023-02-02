@@ -49,7 +49,8 @@ class HasMany extends Chrisvanlier2005\BaseRelation
         try {
             $model = new $this->model();
             $model->validate_fields($data);
-            dd($data);
+            $data[$this->foreignKeyName] = $this->id;
+            $model->create($data);
         }
         catch (Exception $e) {
             throw new Exception("Invalid fields provided");
