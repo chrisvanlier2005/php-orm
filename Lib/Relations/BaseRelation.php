@@ -21,6 +21,7 @@ class BaseRelation
         $this->table = $table;
         $this->foreignKeyName = $foreignKeyName;
         if($instance){
+
             $this->id = $instance->{$instance->getPrimaryKey()};
            // $this->instance = $instance;
         }
@@ -46,9 +47,18 @@ class BaseRelation
      * @throws \Exception
      */
     protected function fetch(){
-        throw new \Exception("Fetch not implemented");
+        throw new \Exception("Fetch not implemented in relation");
     }
 
+    /**
+     * Alternative syntax for fetch(), does the same thing.
+     * @return mixed
+     * @throws \Exception
+     */
+    public function get()
+    {
+        return $this->fetch();
+    }
 
     protected function sort_items(&$input_result, &$relation_result, $key_name)
     {
@@ -75,5 +85,17 @@ class BaseRelation
         $db->setQuery($query);
         $db->setParameters($parameters);
         return $db->execute();
+    }
+
+    public function count()
+    {
+        $query = "SELECT COUNT(*) FROM {$this->table} WHERE {$this->foreignKeyName} = ?";
+        return $this->single_query($query, [$this->id]);
+    }
+
+    public function first()
+    {
+        $query = "SELECT * FROM {$this->table} WHERE {$this->foreignKeyName} = ? LIMIT 1";
+        return $this->single_query($query, [$this->id]);
     }
 }

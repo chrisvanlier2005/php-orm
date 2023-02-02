@@ -6,7 +6,9 @@ class BelongsTo extends BaseRelation
     protected $localKeyName;
     public function __construct($model_class, $foreignKeyName, $localKeyName, $table = null, $instance = null){
         parent::__construct($model_class, $foreignKeyName, $table, $instance);
+
         $this->localKeyName = $localKeyName;
+        $this->instance = $instance;
     }
     public function execute_relation(&$result, QueryType $type, $relation_primary_key = "id"){
 
@@ -46,8 +48,10 @@ class BelongsTo extends BaseRelation
     {
         $query = "SELECT * FROM {$this->table} WHERE {$this->foreignKeyName} = ?";
         $db = DatabaseQuery::new();
+
         $db->setQuery($query);
         $db->setParameters([$this->id]);
+
         return $db->execute();
     }
 }

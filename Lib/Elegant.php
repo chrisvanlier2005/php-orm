@@ -2,13 +2,15 @@
 
 namespace Chrisvanlier2005;
 
+use Chrisvanlier2005\Traits\Filters;
 use Exception;
 use HasMany;
-use Chrisvanlier2005\BelongsTo;
 use ReflectionClass;
+use ReflectionException;
 use stdClass;
-use Chrisvanlier2005\Traits\Filters;
-enum QueryType {
+
+enum QueryType
+{
     case SINGLE;
     case MULTIPLE;
 }
@@ -16,14 +18,14 @@ enum QueryType {
 class Elegant
 {
     use Filters;
+
     public $relations = [];
+    public $id = null;
     protected $table;
     protected $fields = [];
     protected $primaryKey = 'id';
-
     protected $query = "";
     protected $parameters = [];
-    public $id = null;
 
     public function __construct()
     {
@@ -33,55 +35,12 @@ class Elegant
     }
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function get_class_name($class): string
     {
         $reflectionObject = new ReflectionClass($class);
         return $reflectionObject->getShortName();
-    }
-
-    private function get_relations(&$result){
-        $type = QueryType::SINGLE;
-        if(!$result instanceof \stdClass){
-            $type = QueryType::MULTIPLE;
-        }
-
-        foreach($this->relations as $relation)
-        {
-            $relation = $this->$relation(false);
-            $relation->execute_relation($result, $type, $this->primaryKey);
-        }
-    }
-
-
-    private function validate_fields($params){
-        foreach ($this->fields as $field)
-        {
-            if (!in_array($field, array_keys($params)))
-            {
-                throw new Exception("Field {$field} is required");
-            }
-        }
-    }
-
-    private function insert($params) : array
-    {
-        $db = DatabaseQuery::new();
-        $query = "INSERT INTO {$this->table} (";
-        $query .= implode(',', array_keys($params));
-        $query .= ") VALUES (";
-        $query .= implode(',', array_fill(0, count($params), '?'));
-        $query .= ")";
-        $db->setQuery($query);
-        $db->setParameters(array_values($params));
-        $db->execute();
-        $params[$this->primaryKey] = $db->lastInsertId($this->table);
-        return $params;
-    }
-
-    public function getPrimaryKey(){
-        return $this->primaryKey;
     }
 
     public static function all()
@@ -101,41 +60,14 @@ class Elegant
     }
 
     /**
-     * Adds a hasMany relationship to the model
-     * @param $model_class
+     * Searches for a specific item in the table
+     * @param $id
      * @throws Exception
      */
-    public function hasMany($model_class, $foreignKeyName, $table = null, $instance = null)
+    public static function search($id): stdClass
     {
-        $this->validate_class($model_class);
-        return new HasMany($model_class, $foreignKeyName, $table, $instance);
-    }
-
-    public function belongsTo($model_class, $foreignKeyName, $localKeyName, $table = null){
-        $this->validate_class($model_class);
-        return new BelongsTo($model_class, $foreignKeyName, $localKeyName, $table, $this);
-    }
-
-    /**
-     * Validate if the model extends the Elegant class
-     * @param $model_class
-     * @throws Exception
-     */
-    private function validate_class($model_class): void
-    {
-        // check if the class extends Elegant
-        if (!is_subclass_of($model_class, Elegant::class)) {
-            throw new Exception("The class {$model_class} does not extend Elegant");
-        }
-    }
-
-    /**
-     * Adds a hasOne relationship to the model
-     * @throws Exception
-     */
-    public function hasOne($model_class)
-    {
-        $this->validate_class($model_class);
+        $eq = new static();
+        return $eq->find($id);
     }
 
     /**
@@ -147,7 +79,7 @@ class Elegant
      * @return stdClass
      * @throws Exception
      */
-    public function find($id) : stdClass
+    public function find($id): stdClass
     {
         $baseQuery = "SELECT * FROM {$this->table} WHERE {$this->primaryKey} = :id";
         $db = DatabaseQuery::new();
@@ -168,15 +100,127 @@ class Elegant
         return $result;
     }
 
+    private function get_relations(&$result)
+    {
+        $type = QueryType::SINGLE;
+        if (!$result instanceof stdClass) {
+            $type = QueryType::MULTIPLE;
+        }
+
+        foreach ($this->relations as $relation) {
+            $relation = $this->$relation(false);
+            $relation->execute_relation($result, $type, $this->primaryKey);
+        }
+    }
+
     /**
-     * Searches for a specific item in the table
-     * @param $id
+     * Creates a new instance of the model
+     * @return static
+     */
+    public static function retrieve()
+    {
+        return new static();
+    }
+
+    /**
+     * Validates the input fields if it matches the fields in the model
+     * and then inserts the record into the database
+     * @param $params array
+     * @return mixed
      * @throws Exception
      */
-    public static function search($id): stdClass
+    public static function create(array $params): array
     {
-        $eq = new static();
-        return $eq->find($id);
+        $model = new static();
+        $model->validate_fields($params);
+        return $model->insert($params);
+    }
+
+    private function validate_fields($params)
+    {
+        foreach ($this->fields as $field) {
+            if (!in_array($field, array_keys($params))) {
+                throw new Exception("Field {$field} is required");
+            }
+        }
+    }
+
+    private function insert($params): array
+    {
+        $db = DatabaseQuery::new();
+        $query = "INSERT INTO {$this->table} (";
+        $query .= implode(',', array_keys($params));
+        $query .= ") VALUES (";
+        $query .= implode(',', array_fill(0, count($params), '?'));
+        $query .= ")";
+        $db->setQuery($query);
+        $db->setParameters(array_values($params));
+        $db->execute();
+        $params[$this->primaryKey] = $db->lastInsertId($this->table);
+        return $params;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public static function hydrate(array|stdClass $params): static
+    {
+        $hydratedClass = new static();
+        $params = (array)$params;
+        // validate the parameters
+        $hydratedClass->validate_fields($params);
+        foreach ($params as $param => $value) {
+            $hydratedClass->{$param} = $value;
+        }
+        if (isset($params[$hydratedClass->primaryKey])) {
+            $hydratedClass->exists = true;
+            $hydratedClass->id = $params[$hydratedClass->primaryKey];
+        }
+        return $hydratedClass;
+    }
+
+    public function getPrimaryKey()
+    {
+        return $this->primaryKey;
+    }
+
+    /**
+     * Adds a hasMany relationship to the model
+     * @param $model_class
+     * @throws Exception
+     */
+    public function hasMany($model_class, $foreignKeyName, $table = null, $instance = null)
+    {
+        $this->validate_class($model_class);
+        return new HasMany($model_class, $foreignKeyName, $table, $instance);
+    }
+
+    /**
+     * Validate if the model extends the Elegant class
+     * @param $model_class
+     * @throws Exception
+     */
+    private function validate_class($model_class): void
+    {
+        // check if the class extends Elegant
+        if (!is_subclass_of($model_class, Elegant::class)) {
+            throw new Exception("The class {$model_class} does not extend Elegant");
+        }
+    }
+
+    public function belongsTo($model_class, $foreignKeyName, $localKeyName, $table = null, $instance = null)
+    {
+        $this->validate_class($model_class);
+        return new BelongsTo($model_class, $foreignKeyName, $localKeyName, $table, $instance);
+    }
+
+    /**
+     * Adds a hasOne relationship to the model
+     * @throws Exception
+     */
+    public function hasOne($model_class)
+    {
+        $this->validate_class($model_class);
     }
 
     /**
@@ -197,21 +241,12 @@ class Elegant
     }
 
     /**
-     * Creates a new instance of the model
-     * @return static
-     */
-    public static function retrieve()
-    {
-        return new static();
-    }
-
-    /**
      * Retrieves all records from the database
      * and returns them as an array
      * @return array
      * @throws Exception
      */
-    public function get() : array
+    public function get(): array
     {
         $baseQuery = "SELECT * FROM {$this->table} ";
         $baseQuery .= $this->query;
@@ -227,37 +262,5 @@ class Elegant
 
         $this->get_relations($results);
         return $results;
-    }
-
-    /**
-     * Validates the input fields if it matches the fields in the model
-     * and then inserts the record into the database
-     * @param $params array
-     * @return mixed
-     * @throws Exception
-     */
-    public static function create(array $params) : array {
-        $model = new static();
-        $model->validate_fields($params);
-        return $model->insert($params);
-    }
-
-    /**
-     * @throws Exception
-     */
-    public static function hydrate(array|stdClass $params) : static
-    {
-        $hydratedClass = new static();
-        $params = (array) $params;
-        // validate the parameters
-        $hydratedClass->validate_fields($params);
-        foreach($params as $param => $value){
-            $hydratedClass->{$param} = $value;
-        }
-        if (isset($params[$hydratedClass->primaryKey])){
-            $hydratedClass->exists = true;
-            $hydratedClass->id = $params[$hydratedClass->primaryKey];
-        }
-        return $hydratedClass;
     }
 }
