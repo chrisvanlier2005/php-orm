@@ -29,16 +29,8 @@ class BelongsTo extends BaseRelation
         $db = DatabaseQuery::new();
         $db->setQuery($query);
         $manyResults = $db->execute();
-        foreach ($manyResults as $manyResult)
-        {
-            foreach ($results as $result)
-            {
-                if ($manyResult->{$relation_primary_key} == $result->{$this->localKeyName})
-                {
-                    $result->{$this->table} = $manyResult;
-                }
-            }
-        }
+
+        $this->sort_items($results, $manyResults, $relation_primary_key);
     }
 
     protected function fetchSingle(&$result){

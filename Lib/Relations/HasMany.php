@@ -6,8 +6,6 @@ class HasMany extends Chrisvanlier2005\BaseRelation
 {
 
     public function execute_relation(&$result, QueryType $type, $relation_primary_key = "id"){
-
-
         if ($type == QueryType::SINGLE)
         {
             return $this->fetchSingle($result);
@@ -29,32 +27,17 @@ class HasMany extends Chrisvanlier2005\BaseRelation
         $db->setQuery($query);
         $manyResults = $db->execute();
 
-        foreach ($results as $result)
-        {
-            $result->{$this->table} = [];
-            foreach($manyResults as $manyResult)
-            {
-                if ($manyResult->{$this->foreignKeyName} == $result->id)
-                {
-                    $result->{$this->table}[] = $manyResult;
-                }
-            }
-        }
+        $this->sort_items($results, $manyResults, $relation_primary_key);
     }
 
     protected function fetchSingle(&$result){
        $query = "SELECT * FROM {$this->table} WHERE {$this->foreignKeyName} = ?";
-       $db = DatabaseQuery::new();
-       $db->setQuery($query);
-       $db->setParameters([$result->id]);
-       $result->{$this->table} = $db->execute();
+       $output = $this->single_query($query, [$result->id]);
+       $result->{$this->table} = $output;
     }
     public function fetch(){
         $query = "SELECT * FROM {$this->table} WHERE {$this->foreignKeyName} = ?";
-        $db = DatabaseQuery::new();
-        $db->setQuery($query);
-        $db->setParameters([$this->id]);
-        return $db->execute();
+        return $this->single_query($query, [$this->id]);
     }
 
 }
