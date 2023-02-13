@@ -40,6 +40,7 @@ class HasMany extends Chrisvanlier2005\BaseRelation
     public function fetch()
     {
         $query = "SELECT * FROM {$this->table} WHERE {$this->foreignKeyName} = ?";
+
         return $this->single_query($query, [$this->id]);
     }
 

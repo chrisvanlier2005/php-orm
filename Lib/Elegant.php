@@ -70,12 +70,26 @@ class Elegant
         return $db->execute();
 
     }
-
-    public static function with($relation): static
+    /**
+     * Include a relation in the database query
+     * Relation must be defined in a function with the same name
+     * In the model.
+     * @throws Exception
+     */
+    public static function with(string $relation): static
     {
         $model = new static();
         $model->relations[] = $relation;
         return $model;
+    }
+
+    public function load(string $relation) : void
+    {
+        $this->relations[] = $relation;
+        $classValues = [
+
+        ];
+        $this->get_relations($this);
     }
 
     /**
@@ -119,7 +133,7 @@ class Elegant
         return $result;
     }
 
-    private function get_relations(&$result)
+    private function get_relations(&$result): void
     {
         $type = QueryType::SINGLE;
         if (!$result instanceof stdClass) {
@@ -136,7 +150,7 @@ class Elegant
      * Creates a new instance of the model
      * @return static
      */
-    public static function retrieve()
+    public static function retrieve(): static
     {
         return new static();
     }
@@ -155,7 +169,7 @@ class Elegant
         return $model->insert($params);
     }
 
-    public function validate_fields($params)
+    public function validate_fields($params): void
     {
         foreach ($this->fields as $field) {
             if (!in_array($field, array_keys($params))) {
@@ -203,6 +217,9 @@ class Elegant
         return $hydratedClass;
     }
 
+    /**
+     * Retrieve the primary key of the model
+     */
     public function getPrimaryKey()
     {
         return $this->primaryKey;
@@ -213,26 +230,17 @@ class Elegant
      * @param $model_class
      * @throws Exception
      */
-    public function hasMany($model_class, $foreignKeyName, $table = null, $instance = null)
+    public function hasMany($model_class, $foreignKeyName, $table = null, $instance = null): HasMany
     {
         $this->validate_class($model_class);
         return new HasMany($model_class, $foreignKeyName, $table, $instance);
     }
 
     /**
-     * Validate if the model extends the Elegant class
-     * @param $model_class
-     * @throws Exception
+     * Adds a belongsTo relationship to the model
+     * @throws ReflectionException
      */
-    private function validate_class($model_class): void
-    {
-        // check if the class extends Elegant
-        if (!is_subclass_of($model_class, Elegant::class)) {
-            throw new Exception("The class {$model_class} does not extend Elegant");
-        }
-    }
-
-    public function belongsTo($model_class, $foreignKeyName, $localKeyName, $table = null, $instance = null)
+    public function belongsTo($model_class, $foreignKeyName, $localKeyName, $table = null, $instance = null): BelongsTo
     {
         $this->validate_class($model_class);
         return new BelongsTo($model_class, $foreignKeyName, $localKeyName, $table, $instance);
@@ -248,14 +256,30 @@ class Elegant
     }
 
     /**
+     * Validate if the model extends the Elegant class
+     * @param $model_class
+     * @throws Exception
+     */
+    private function validate_class($model_class): void
+    {
+        // check if the class extends Elegant
+        if (!is_subclass_of($model_class, Elegant::class)) {
+            throw new Exception("The class {$model_class} does not extend Elegant");
+        }
+    }
+
+    /**
      * Retrieves a single record from the database
      * based on the id or primary key, if no record is found
      * it will kill the application
      * @param int $id
      * @return stdClass|void
      */
-    public function findOrFail(int $id)
+    public function findOrFail($id)
     {
+        if (!is_numeric($id)) {
+            throw new Exception("The id must be numeric");
+        }
         try {
             return $this->find($id);
         } catch (Exception $e) {
@@ -286,5 +310,24 @@ class Elegant
 
         $this->get_relations($results);
         return $results;
+    }
+
+    public function first() : stdClass
+    {
+        $baseQuery = "SELECT * FROM {$this->table} ";
+        $baseQuery .= $this->query;
+        $db = DatabaseQuery::new();
+        $db->setQuery($baseQuery);
+        $db->setParameters($this->parameters);
+
+        $results = $db->execute();
+
+        if (empty($results)) {
+            throw new Exception("No records found");
+        }
+
+        $this->get_relations($results);
+
+        return $results[0];
     }
 }

@@ -41,6 +41,7 @@ class BaseRelation
      */
     public function get()
     {
+
         return $this->fetch();
     }
 

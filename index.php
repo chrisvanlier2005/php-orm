@@ -3,14 +3,19 @@ require_once 'includes.php';
 
 use Models\Post;
 use Models\Comment;
+$id = $_GET['id'] ?? 1;
+
+
 
 try {
-    $post = Post::search(1);
-    Post::hydrate($post);
+    $post = Post::retrieve()
+        ->orderBy('id', 'DESC')
+        ->first();
 
-    $post->comments()->attach([
-            "title" => "This is a comment",
-    ]);
+    $post = Post::hydrate($post);
+    dd(
+        $post->load('comments')
+    );
 } catch (Exception $e) {
     dd($e->getMessage());
 }
@@ -29,6 +34,12 @@ try {
     }
 </style>
 
-<pre>
-    <?php var_dump($post) ?>
-</pre>
+<h1><?= $post->title ?></h1>
+<?php foreach ($post->comments as $comment): ?>
+    <div class="comment">
+        <div class="comment__body">
+            <p><?= $comment->content ?></p>
+        </div>
+
+    </div>
+<?php endforeach; ?>
